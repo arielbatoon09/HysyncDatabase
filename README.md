@@ -11,7 +11,7 @@ A minimal, ready-to-use template for creating Hytale plugins with modern build t
 ✅ **Java 25** - Latest Java features  
 ✅ **ShadowJar** - Automatic dependency bundling  
 ✅ **CI/CD Ready** - GitHub Actions workflow included  
-✅ **Minimal Structure** - Only essential files, write your own code  
+✅ **Minimal Structure** - Only essential files, write your own code
 
 ---
 
@@ -52,11 +52,13 @@ Your plugin JAR will be in: `build/libs/TemplatePlugin-1.0.0.jar`
 When ready to customize, edit these files:
 
 **`settings.gradle.kts`:**
+
 ```kotlin
 rootProject.name = "your-plugin-name"
 ```
 
 **`gradle.properties`:**
+
 ```properties
 pluginGroup=com.yourname
 pluginVersion=1.0.0
@@ -64,6 +66,7 @@ pluginDescription=Your plugin description
 ```
 
 **`src/main/resources/manifest.json`:**
+
 ```json
 {
   "Group": "YourName",
@@ -73,6 +76,7 @@ pluginDescription=Your plugin description
 ```
 
 **Rename the main plugin class:**
+
 - Rename `src/main/java/com/example/templateplugin/TemplatePlugin.java`
 - Update package name to match your `pluginGroup`
 
@@ -91,6 +95,7 @@ Your plugin JAR will be in: `build/libs/YourPluginName-1.0.0.jar`
 ### 5. Implement Your Plugin
 
 Write your plugin code in `src/main/java/`:
+
 - Commands
 - Event listeners
 - Services
@@ -110,9 +115,10 @@ gradlew.bat runServer
 ```
 
 This will:
+
 1. Download the Hytale server (cached for future runs)
 2. Build your plugin
-3. Copy it to the server's plugins folder
+3. Copy it to the server's mods folder
 4. Start the server with interactive console
 
 ---
@@ -141,6 +147,7 @@ TemplatePlugin/
 ```
 
 **Note:** This is a minimal template. Create your own folder structure:
+
 - `commands/` - For command implementations
 - `listeners/` - For event listeners
 - `services/` - For business logic
@@ -198,11 +205,11 @@ Edit `build.gradle.kts`:
 ```kotlin
 dependencies {
     // Hytale API (provided by server)
-    compileOnly(files("libs/hytale-server.jar"))
-    
+    compileOnly(files("./HytaleServer.jar"))
+
     // Your dependencies (will be bundled)
     implementation("com.google.code.gson:gson:2.10.1")
-    
+
     // Test dependencies
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
 }
@@ -210,7 +217,7 @@ dependencies {
 
 ### Configuring Server Testing
 
-**Run Hytale Server** - A Gradle plugin to download and run a Hytale server for development and testing purposes. The server files will be located in the `run/` directory of the project. Before starting the server it will compile (shadowJar task) and copy the plugin jar to the server's `plugins/` folder.
+**Run Hytale Server** - A Gradle plugin to download and run a Hytale server for development and testing purposes. The server files will be located in the `run/` directory of the project. Before starting the server it will compile (shadowJar task) and copy the plugin jar to the server's `mods/` folder.
 
 **Usage:**
 
@@ -233,6 +240,7 @@ gradlew.bat runServer
 ```
 
 **Features:**
+
 - ✅ Automatic server JAR download and caching
 - ✅ Compiles and deploys your plugin automatically
 - ✅ Starts server with interactive console
@@ -242,6 +250,7 @@ gradlew.bat runServer
 ### Implementing Your Plugin
 
 **Recommended folder structure:**
+
 ```
 src/main/java/com/yourname/yourplugin/
 ├── YourPlugin.java          # Main class
@@ -254,6 +263,7 @@ src/main/java/com/yourname/yourplugin/
 ```
 
 **See our documentation for examples:**
+
 - [Getting Started with Plugins](../Documentation/07-getting-started-with-plugins.md)
 - [Advanced Plugin Patterns](../Documentation/12-advanced-plugin-patterns.md)
 - [Common Plugin Features](../Documentation/14-common-plugin-features.md)
