@@ -3,21 +3,39 @@ package org.hysync.database;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
+import org.hysync.database.api.InventorySyncService;
+import org.hysync.database.commands.MigrateInventoryCommand;
 import org.hysync.database.config.DatabaseConfig;
 import org.hysync.database.config.PluginConfigLoader;
 import org.hysync.database.core.DatabasePlugin;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class HysyncDatabase extends JavaPlugin {
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
+    private static HysyncDatabase instance;
+
     private DatabasePlugin databasePlugin;
 
     public HysyncDatabase(@Nonnull JavaPluginInit init) {
         super(init);
+        instance = this;
+    }
+
+    /** For use by other plugins (e.g. HysyncCore) to get the Inventory Sync API. */
+    @Nullable
+    public static HysyncDatabase getInstance() {
+        return instance;
+    }
+
+    /** Cross-server inventory sync API. Returns null if DB is not available. */
+    @Nullable
+    public InventorySyncService getInventorySyncService() {
+        return databasePlugin != null ? databasePlugin.getInventorySyncService() : null;
     }
 
     @Override
@@ -47,6 +65,7 @@ public class HysyncDatabase extends JavaPlugin {
         try {
             databasePlugin = new DatabasePlugin(dbConfig);
             LOGGER.atInfo().log("Database connection pool started successfully");
+            getCommandRegistry().registerCommand(new MigrateInventoryCommand(this));
         } catch (RuntimeException e) {
             LOGGER.atSevere().withCause(e).log("Failed to connect to database. Check mods/HysyncData/config.json");
         }
@@ -57,6 +76,8 @@ public class HysyncDatabase extends JavaPlugin {
         LOGGER.atInfo().log("Disabling plugin " + getName());
         if (databasePlugin != null) {
             databasePlugin.teardown();
+            databasePlugin = null;
         }
+        instance = null;
     }
 }
