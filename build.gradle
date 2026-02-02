@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'org.jetbrains.gradle.plugin.idea-ext' version '1.3'
+    id 'com.gradleup.shadow' version '9.0.0'
 }
 
 import org.gradle.internal.os.OperatingSystem
@@ -44,11 +45,19 @@ javadoc {
     options.addStringOption('Xdoclint:-missing', '-quiet')
 }
 
-// Adds the Hytale server as a build dependency, allowing you to reference and
-// compile against their code. This requires you to have Hytale installed using
-// the official launcher for now.
+repositories {
+    mavenCentral()
+}
+
+// Hytale server: compileOnly so we compile against the API but do NOT bundle it
+// (plugin runs inside the server; bundling the server would make shadowJar huge and slow).
 dependencies {
-    implementation(files("$hytaleHome/install/$patchline/package/game/latest/Server/HytaleServer.jar"))
+    compileOnly(files("$hytaleHome/install/$patchline/package/game/latest/Server/HytaleServer.jar"))
+    implementation("org.postgresql:postgresql:42.7.9")
+    implementation "com.zaxxer:HikariCP:6.1.0"
+    implementation "com.google.code.gson:gson:2.11.0"
+    // HikariCP uses SLF4J; provide NOP binding so "Failed to load StaticLoggerBinder" warning goes away
+    implementation "org.slf4j:slf4j-nop:2.0.9"
 }
 
 // Create the working directory to run the server if it does not already exist.
@@ -127,5 +136,15 @@ tasks.register('generateVSCodeLaunch') {
             ]
         ]
         launchFile.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(launchConfig))
+    }
+}
+
+shadowJar {
+    relocate 'com.zaxxer.hikari', 'org.hysync.shadow.hikari'
+    relocate 'com.google.gson', 'org.hysync.shadow.gson'
+    // Do NOT relocate org.postgresql: DriverManager discovers the driver via
+    // META-INF/services/java.sql.Driver which points to org.postgresql.Driver.
+    mergeServiceFiles {
+        include 'META-INF/services/*'
     }
 }

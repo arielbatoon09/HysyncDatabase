@@ -40,6 +40,7 @@ The template works out-of-the-box:
 ```bash
 # Windows
 gradlew.bat shadowJar
+gradlew clean shadowJar
 
 # Linux/Mac
 ./gradlew shadowJar
