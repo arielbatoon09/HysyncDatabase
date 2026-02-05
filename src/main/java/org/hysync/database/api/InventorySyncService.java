@@ -55,6 +55,33 @@ public interface InventorySyncService {
      */
     Optional<PlayerInfo> getPlayer(String playerUuid);
 
+    // ----- Single-session (anti-bypass): one server per player -----
+
+    /**
+     * Which server currently has this player, if any.
+     *
+     * @param playerUuid player UUID (text)
+     * @return server_id (e.g. "smp", "main_town") or empty if not in a session
+     */
+    Optional<String> getCurrentServerId(String playerUuid);
+
+    /**
+     * Claim the session for this server. Fails if the player is already on another server.
+     *
+     * @param playerUuid player UUID (text)
+     * @param serverId    this server's unique id (e.g. "smp", "main_town")
+     * @return true if claimed or already claimed by this server, false if another server has them
+     */
+    boolean claimSession(String playerUuid, String serverId);
+
+    /**
+     * Release the session when the player leaves this server. Only clears if this server owns it.
+     *
+     * @param playerUuid player UUID (text)
+     * @param serverId    this server's unique id
+     */
+    void releaseSession(String playerUuid, String serverId);
+
     /**
      * Minimal player info for API consumers.
      */

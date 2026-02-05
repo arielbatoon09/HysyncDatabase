@@ -9,7 +9,7 @@ import java.util.Optional;
 
 /**
  * Implementation of cross-server inventory sync using the players and player_inventory tables.
- * Assumes migration V1__create_players_and_inventory.sql has been applied.
+ * Assumes migrations V1 and V2 (player_sessions) have been applied.
  */
 public class InventorySyncServiceImpl implements InventorySyncService {
 
@@ -27,6 +27,13 @@ public class InventorySyncServiceImpl implements InventorySyncService {
         "UPDATE player_inventory SET hotbar_manager_json = ?::jsonb, updated_at = NOW() WHERE player_uuid = ?";
     private static final String GET_PLAYER =
         "SELECT uuid, display_name, updated_at FROM players WHERE uuid = ?";
+
+    private static final String GET_CURRENT_SERVER =
+        "SELECT server_id FROM player_sessions WHERE player_uuid = ?";
+    private static final String INSERT_SESSION =
+        "INSERT INTO player_sessions (player_uuid, server_id, updated_at) VALUES (?, ?, NOW())";
+    private static final String DELETE_SESSION =
+        "DELETE FROM player_sessions WHERE player_uuid = ? AND server_id = ?";
 
     private final DatabaseManager databaseManager;
 
@@ -127,5 +134,68 @@ public class InventorySyncServiceImpl implements InventorySyncService {
             // Log and return empty
         }
         return Optional.empty();
+    }
+
+    @Override
+    public Optional<String> getCurrentServerId(String playerUuid) {
+        try (Connection conn = databaseManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement(GET_CURRENT_SERVER)) {
+            ps.setString(1, playerUuid);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    String serverId = rs.getString(1);
+                    return Optional.ofNullable(serverId);
+                }
+            }
+        } catch (SQLException e) {
+            // ignore
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public boolean claimSession(String playerUuid, String serverId) {
+        if (playerUuid == null || serverId == null) return false;
+        try (Connection conn = databaseManager.getConnection();
+             PreparedStatement sel = conn.prepareStatement(GET_CURRENT_SERVER)) {
+            sel.setString(1, playerUuid);
+            String current = null;
+            try (ResultSet rs = sel.executeQuery()) {
+                if (rs.next()) current = rs.getString(1);
+            }
+            if (current == null) {
+                try (PreparedStatement ins = conn.prepareStatement(INSERT_SESSION)) {
+                    ins.setString(1, playerUuid);
+                    ins.setString(2, serverId);
+                    ins.executeUpdate();
+                    return true;
+                }
+            }
+            if (current.equals(serverId)) {
+                try (PreparedStatement upd = conn.prepareStatement(
+                    "UPDATE player_sessions SET updated_at = NOW() WHERE player_uuid = ? AND server_id = ?")) {
+                    upd.setString(1, playerUuid);
+                    upd.setString(2, serverId);
+                    upd.executeUpdate();
+                }
+                return true;
+            }
+            return false;
+        } catch (SQLException e) {
+            return false;
+        }
+    }
+
+    @Override
+    public void releaseSession(String playerUuid, String serverId) {
+        if (playerUuid == null || serverId == null) return;
+        try (Connection conn = databaseManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement(DELETE_SESSION)) {
+            ps.setString(1, playerUuid);
+            ps.setString(2, serverId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            // ignore
+        }
     }
 }
