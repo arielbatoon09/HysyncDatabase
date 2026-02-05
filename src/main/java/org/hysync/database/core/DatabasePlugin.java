@@ -7,6 +7,7 @@ import com.hypixel.hytale.logger.HytaleLogger;
 public class DatabasePlugin {
     private final DatabaseManager databaseManager;
     private volatile InventorySyncService inventorySyncService;
+    private volatile org.hysync.database.api.StashSyncService stashSyncService;
 
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
 
@@ -18,7 +19,10 @@ public class DatabasePlugin {
         return databaseManager;
     }
 
-    /** Cross-server inventory API for other plugins. Tables must exist (run V1 migration first). */
+    /**
+     * Cross-server inventory API for other plugins. Tables must exist (run V1
+     * migration first).
+     */
     public InventorySyncService getInventorySyncService() {
         if (inventorySyncService == null) {
             synchronized (this) {
@@ -28,6 +32,21 @@ public class DatabasePlugin {
             }
         }
         return inventorySyncService;
+    }
+
+    /**
+     * Cross-server stash API for other plugins. Tables must exist (run V3 migration
+     * first).
+     */
+    public org.hysync.database.api.StashSyncService getStashSyncService() {
+        if (stashSyncService == null) {
+            synchronized (this) {
+                if (stashSyncService == null) {
+                    stashSyncService = new StashSyncServiceImpl(databaseManager);
+                }
+            }
+        }
+        return stashSyncService;
     }
 
     public void teardown() {

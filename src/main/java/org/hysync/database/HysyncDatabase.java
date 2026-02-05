@@ -38,6 +38,12 @@ public class HysyncDatabase extends JavaPlugin {
         return databasePlugin != null ? databasePlugin.getInventorySyncService() : null;
     }
 
+    /** Cross-server stash sync API. Returns null if DB is not available. */
+    @Nullable
+    public org.hysync.database.api.StashSyncService getStashSyncService() {
+        return databasePlugin != null ? databasePlugin.getStashSyncService() : null;
+    }
+
     @Override
     public void setup() {
         LOGGER.atInfo().log("Setting up HysyncDatabase plugin");
@@ -66,6 +72,15 @@ public class HysyncDatabase extends JavaPlugin {
             databasePlugin = new DatabasePlugin(dbConfig);
             LOGGER.atInfo().log("Database connection pool started successfully");
             getCommandRegistry().registerCommand(new MigrateInventoryCommand(this));
+            getCommandRegistry().registerCommand(new org.hysync.database.commands.MigrateStashCommand(this));
+
+            getEventRegistry().registerGlobal(
+                    com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent.class, event -> {
+                        String playerUuid = event.getPlayerRef().getUuid().toString();
+                        if (databasePlugin != null && databasePlugin.getStashSyncService() != null) {
+                            databasePlugin.getStashSyncService().unloadCache(playerUuid);
+                        }
+                    });
         } catch (RuntimeException e) {
             LOGGER.atSevere().withCause(e).log("Failed to connect to database. Check mods/HysyncData/config.json");
         }
