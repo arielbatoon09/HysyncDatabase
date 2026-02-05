@@ -8,6 +8,7 @@ public class DatabasePlugin {
     private final DatabaseManager databaseManager;
     private volatile InventorySyncService inventorySyncService;
     private volatile org.hysync.database.api.StashSyncService stashSyncService;
+    private volatile org.hysync.database.api.VoteSyncService voteSyncService;
 
     private static final HytaleLogger LOGGER = HytaleLogger.forEnclosingClass();
 
@@ -47,6 +48,20 @@ public class DatabasePlugin {
             }
         }
         return stashSyncService;
+    }
+
+    /**
+     * Cross-server vote API for other plugins.
+     */
+    public org.hysync.database.api.VoteSyncService getVoteSyncService() {
+        if (voteSyncService == null) {
+            synchronized (this) {
+                if (voteSyncService == null) {
+                    voteSyncService = new VoteSyncServiceImpl(databaseManager);
+                }
+            }
+        }
+        return voteSyncService;
     }
 
     public void teardown() {

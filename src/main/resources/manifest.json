@@ -1,7 +1,7 @@
 {
     "Group": "Hysync",
     "Name": "HysyncDatabase",
-    "Version": "0.0.1",
+    "Version": "0.0.2",
     "Description": "A database plugin for Hysync!",
     "Authors": [
         {

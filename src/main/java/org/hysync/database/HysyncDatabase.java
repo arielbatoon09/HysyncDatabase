@@ -44,6 +44,12 @@ public class HysyncDatabase extends JavaPlugin {
         return databasePlugin != null ? databasePlugin.getStashSyncService() : null;
     }
 
+    /** Cross-server vote sync API. Returns null if DB is not available. */
+    @Nullable
+    public org.hysync.database.api.VoteSyncService getVoteSyncService() {
+        return databasePlugin != null ? databasePlugin.getVoteSyncService() : null;
+    }
+
     @Override
     public void setup() {
         LOGGER.atInfo().log("Setting up HysyncDatabase plugin");
